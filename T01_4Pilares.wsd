@@ -1,0 +1,131 @@
+@startuml T01_4Pilares
+
+enum PERIODICIDAD {
+    MENSUAL
+    ANUAL
+}
+enum MONEDA {
+    MXN
+    USD
+    EUR
+}
+
+class Usuario{
+    - str id
+    - str nombre
+    }
+class Plan{
+    - str id
+    - str nombre
+    - float precio_mxn
+    - PERIODICIDAD periodicidad
+    }
+class Suscripcion{
+    - str id
+    - Usuario usuario
+    - Plan plan
+    - bool activa
+
+    + activar() -> void
+    + cancelar() -> void
+    }
+
+
+abstract class MetodoPago {
+    - str id
+    - str tipo
+
+    + pagar(monto: Money) -> bool
+}
+class Tarjeta {
+    - str numero
+    - str titular
+    - str vencimiento
+    ...
+}
+class Transferencia {
+    - str clabe
+    ...
+}
+class Paypal {
+    - str email
+    ...
+}
+class ApplePay {
+    - str cuentaApple
+    ...
+}
+class Factura {
+    - str id
+    - Suscripcion suscripcion
+    - MetodoPago metodoPago
+    - Money total
+
+    + pagar() -> void
+}
+
+Usuario "1" *-- "0..*" Suscripcion : tiene
+Plan "1" o-- "0..*" Suscripcion : incluye
+Suscripcion "1" --> "1..*" Factura : genera
+Plan ..|> PERIODICIDAD : usa
+
+Factura --> MetodoPago : usa
+MetodoPago <|-- Tarjeta
+MetodoPago <|-- Transferencia
+MetodoPago <|-- Paypal
+MetodoPago <|-- ApplePay
+
+class Money {
+    - float monto
+    - MONEDA moneda
+
+    + convertir() -> Money
+}
+Money ..|> MONEDA : usa
+
+abstract class PoliticaPrecio {
+    - str id
+    - str nombre
+
+    + aplicar(moneda: Money) -> Money
+}
+
+class PrecioFull{
+}
+class CuponPorcentaje {
+    - float porcentaje
+}
+class CuponMonto {
+    - float descuento
+}
+PoliticaPrecio <|-- PrecioFull
+PoliticaPrecio <|-- CuponPorcentaje
+PoliticaPrecio <|-- CuponMonto
+
+abstract class CalculadoraImpuestos {
+    + aplicar(precio: Money) -> Money
+}
+class ImpuestosMX {
+    - float tasaIVA
+    - float tasaISR
+}
+class ImpuestosUS {
+    - float tasaFederal
+    - float tasaEstatal
+}
+CalculadoraImpuestos <|-- ImpuestosMX
+CalculadoraImpuestos <|-- ImpuestosUS
+
+class ServicioCobro {
+    - PoliticaPrecio politica
+    - CalculadoraImpuestos calcImpuestos
+
+    + calcularTotal(subtotal: Money) -> Money
+}
+
+Plan --> Money : cuesta
+ServicioCobro --> PoliticaPrecio : aplica
+ServicioCobro --> CalculadoraImpuestos : compone
+Factura --> ServicioCobro : calcula total
+
+@enduml
