@@ -1,0 +1,91 @@
+@startuml T01_4Pilares
+
+interface Notificador {
+    + enviar(mensaje: str) : void
+}
+
+class NotificadorEmail {
+    - str _destinatario
+    + enviar(mensaje: str) : void
+}
+class NotificadorWebhook {
+    - str _url
+    + enviar(mensaje: str) : void
+}
+class NotificadorSMS {
+    - str _telefono
+    + enviar(mensaje: str) : void
+}
+
+Notificador <|.. NotificadorEmail
+Notificador <|.. NotificadorWebhook
+Notificador <|.. NotificadorSMS
+
+abstract class Sensor {
+    - str id
+    - int ventana
+    - float _calibracion
+    - list<float> _buffer
+
+    + leer(valor: float) : void
+    + promedio : float
+    + en_alerta() : bool
+}
+class SensorTemperatura {
+    - float umbral
+    + en_alerta() : bool
+}
+class SensorVibracion {
+    - float rms_umbral
+    + en_alerta() : bool
+}
+class SensorSismo {
+    - float magnitud_umbral
+    + en_alerta() : bool
+}
+class SensorVolcan {
+    - float temperatura_umbral
+    - float gas_umbral
+    + en_alerta() : bool
+}
+
+Sensor <|-- SensorTemperatura
+Sensor <|-- SensorVibracion
+Sensor <|-- SensorSismo
+Sensor <|-- SensorVolcan
+
+class GestorAlertas {
+    - list<Sensor> _sensores
+    - list<Notificador> _notificadores
+
+    + evaluar_y_notificar() : void
+}
+
+class PanelEmergencias {
+    - GestorAlertas gestor
+    - Notificador notificador
+    - list<Sensor> indicadores
+
+    + actualizar_panel() : void
+}
+
+class RegistroEvento {
+    - Sensor sensor
+    - str mensaje
+    - datetime timestamp
+}
+
+class HistorialEventos {
+    - list<RegistroEvento> registros
+    + agregar_evento(sensor: Sensor, mensaje: str) : void
+}
+
+GestorAlertas --> Sensor : monitorea
+GestorAlertas --> Notificador : usa
+PanelEmergencias --> GestorAlertas : gestiona
+PanelEmergencias --> Sensor : muestra
+PanelEmergencias --> Notificador : notifica
+HistorialEventos --> RegistroEvento : contiene
+RegistroEvento --> Sensor : refiere
+
+@enduml
